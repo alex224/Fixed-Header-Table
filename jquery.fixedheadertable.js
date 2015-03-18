@@ -426,7 +426,7 @@
           tdWidths.push($(this).width());
         });
 
-        firstTdChildrenSelector = 'tbody tr > *:not(:nth-child(n+' + (settings.fixedColumns + 1) + '))';
+        firstTdChildrenSelector = 'tbody:first > tr > *:not(:nth-child(n+' + (settings.fixedColumns + 1) + '))';
         $firstTdChildren = $fixedBody.find(firstTdChildrenSelector)
           .each(function(index) {
             helpers._fixHeightWithCss($(this), tableProps);
