@@ -143,12 +143,6 @@
           $divHead = $wrapper.find('div.fht-thead');
         }
 
-        helpers._setupClone($divHead, tableProps.thead);
-
-        $self.css({
-          'margin-top': -$divHead.outerHeight(true)
-        });
-
         /*
          * Check for footer
          * Setup footer if present
@@ -164,6 +158,19 @@
         }
 
         var tbodyHeight = $wrapper.height() - $thead.outerHeight(true) - tfootHeight - tableProps.border;
+
+        if ($self.height() - $divHead.outerHeight(true) <= tbodyHeight) {
+          // Remove scrollbar padding
+          $divHead.find('table.fht-table')
+            .css({ width: widthMinusScrollbar });
+          settings.scrollbarOffset = 0;
+        }
+
+        helpers._setupClone($divHead, tableProps.thead);
+
+        $self.css({
+          'margin-top': -$divHead.outerHeight(true)
+        });
 
         $divBody.css({
           'height': tbodyHeight
@@ -613,9 +620,8 @@
            * to align with the scrollbar of the body
            */
           if (!$(this).closest('.fht-tbody').length && $(this).is(':last-child') && !$(this).closest('.fht-fixed-column').length) {
-            var padding = Math.max((($(this).innerWidth() - $(this).width()) / 2), settings.scrollbarOffset);
             $(this).css({
-              'padding-right': parseInt($(this).css('padding-right')) + padding + 'px'
+              'padding-right': parseInt($(this).css('padding-right')) + settings.scrollbarOffset + 'px'
             });
           }
         });
