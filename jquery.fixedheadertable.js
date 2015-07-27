@@ -71,6 +71,7 @@
             $divHead,
             $divBody,
             $fixedBody,
+            widthWithScrollbar,
             widthMinusScrollbar;
 
         settings.originalTable = $(this).clone();
@@ -79,10 +80,11 @@
         settings.themeClassName = settings.themeClass;
 
         if (settings.width.search('%') > -1) {
-            widthMinusScrollbar = $self.parent().width() - settings.scrollbarOffset;
+            widthWithScrollbar = $self.parent().width();
         } else {
-            widthMinusScrollbar = settings.width - settings.scrollbarOffset;
+            widthWithScrollbar = settings.width;
         }
+        widthMinusScrollbar = widthWithScrollbar - settings.scrollbarOffset;
 
         $self.css({
           width: widthMinusScrollbar
@@ -133,6 +135,7 @@
 
           $divHead.find('table.fht-table')
             .addClass(settings.originalTable.attr('class'))
+            .css({ width: widthWithScrollbar })
             .attr('style', settings.originalTable.attr('style'));
 
           $thead.clone().appendTo($divHead.find('table'));
