@@ -122,7 +122,7 @@
 
         var tableProps = helpers._getTableProps($self);
 
-        helpers._setupClone($divBody, tableProps.tbody);
+        helpers._setupClone($divBody, tableProps.thead);
 
         if (!$self.hasClass('fht-table-init')) {
           if (settings.fixedColumns > 0) {
