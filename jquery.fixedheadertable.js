@@ -34,7 +34,7 @@
       autoShow:        true, // hide table after its created
       footer:          false, // show footer
       cloneHeadToFoot: false, // clone head and use as footer
-      autoResize:      false, // resize table if its parent wrapper changes size
+      autoResize:      true, // resize table if its parent wrapper changes size
       create:          null // callback after plugin completes
     };
 
@@ -135,13 +135,14 @@
 
           $divHead.find('table.fht-table')
             .addClass(settings.originalTable.attr('class'))
-            .css({ width: widthWithScrollbar })
             .attr('style', settings.originalTable.attr('style'));
 
           $thead.clone().appendTo($divHead.find('table'));
         } else {
           $divHead = $wrapper.find('div.fht-thead');
         }
+        $divHead.find('table.fht-table')
+          .css({ width: widthWithScrollbar });
 
         /*
          * Check for footer
@@ -176,6 +177,14 @@
           'height': tbodyHeight
         });
 
+        if (settings.autoResize && !$self.hasClass('fht-table-init')) {
+          $(window).resize(function() {
+            $wrapper.find('.fht-cell').remove();
+            $self.fixedHeaderTable();
+            methods.resize.apply(self);
+          });
+        }
+
         $self.addClass('fht-table-init');
 
         if (typeof(settings.altClass) !== 'undefined') {
@@ -197,10 +206,11 @@
 
       /*
        * Resize the table
-       * Incomplete - not implemented yet
        */
       resize: function() {
-        var self  = this;
+        var $self = $(this);
+        $self.closest('.fht-table-wrapper').find('.fht-cell').remove();
+        $self.fixedHeaderTable();
         return self;
       },
 
