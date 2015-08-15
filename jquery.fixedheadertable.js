@@ -78,10 +78,15 @@
         settings.scrollbarOffset = helpers._getScrollbarWidth();
         settings.themeClassName = settings.themeClass;
 
+
         if (settings.width.search('%') > -1) {
-            widthMinusScrollbar = $self.parent().width() - settings.scrollbarOffset;
+            widthMinusScrollbar = $self.parent().width();
         } else {
-            widthMinusScrollbar = settings.width - settings.scrollbarOffset;
+            widthMinusScrollbar = settings.width;
+        }
+
+        if($self.height() > $self.parent().height()) {
+          widthMinusScrollbar -= settings.scrollbarOffset;
         }
 
         $self.css({
@@ -426,7 +431,7 @@
           tdWidths.push($(this).width());
         });
 
-        firstTdChildrenSelector = 'tbody tr > *:not(:nth-child(n+' + (settings.fixedColumns + 1) + '))';
+        firstTdChildrenSelector = 'tbody:first > tr > *:not(:nth-child(n+' + (settings.fixedColumns + 1) + '))';
         $firstTdChildren = $fixedBody.find(firstTdChildrenSelector)
           .each(function(index) {
             helpers._fixHeightWithCss($(this), tableProps);
@@ -459,7 +464,6 @@
 
         // set width of fixed column wrapper
         $fixedColumn.css({
-          'height': 0,
           'width': fixedColumnWidth
         });
 
