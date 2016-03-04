@@ -2,6 +2,7 @@
  * jquery.fixedHeaderTable. The jQuery fixedHeaderTable plugin
  *
  * Copyright (c) 2013 Mark Malek
+ *           (c) 2015-2016 Vitaliy Filippov
  * http://fixedheadertable.com
  *
  * Licensed under MIT
@@ -10,10 +11,8 @@
  * http://docs.jquery.com/Plugins/Authoring
  * jQuery authoring guidelines
  *
- * Launch  : October 2009
- * Version : 1.3
- * Released: May 9th, 2011
- *
+ * Version: 2016-03-04
+ * Based on: Original 1.3 (2011-05-09)
  *
  * all CSS sizing (width,height) is done in pixels (px)
  */
@@ -140,6 +139,10 @@
           $thead.clone().appendTo($divHead.find('table'));
         } else {
           $divHead = $wrapper.find('div.fht-thead');
+
+          // Refresh header (it may have changed in between)
+          $divHead.find('thead').remove();
+          $thead.clone().appendTo($divHead.find('table'));
         }
         $divHead.find('table.fht-table')
           .css({ width: widthWithScrollbar });
@@ -178,7 +181,7 @@
         });
 
         if (settings.autoResize && !$self.hasClass('fht-table-init')) {
-          $(window).resize(function() {
+          $(window).on('resize', function() {
             $wrapper.find('.fht-cell').remove();
             $self.fixedHeaderTable();
             methods.resize.apply(self);
