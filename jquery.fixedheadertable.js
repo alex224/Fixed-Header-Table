@@ -11,7 +11,7 @@
  * http://docs.jquery.com/Plugins/Authoring
  * jQuery authoring guidelines
  *
- * Version: 2016-03-04
+ * Version: 2016-08-10
  * Based on: Original 1.3 (2011-05-09)
  *
  * all CSS sizing (width,height) is done in pixels (px)
@@ -138,7 +138,7 @@
 
           $thead.clone().appendTo($divHead.find('table'));
         } else {
-          $divHead = $wrapper.find('div.fht-thead');
+          $divHead = $wrapper.find(settings.fixedColumns > 0 ? 'div.fht-fixed-body div.fht-thead' : 'div.fht-thead');
 
           // Refresh header (it may have changed in between)
           $divHead.find('thead').remove();
@@ -183,7 +183,7 @@
         if (settings.autoResize && !$self.hasClass('fht-table-init')) {
           $(window).on('resize', function() {
             $wrapper.find('.fht-cell').remove();
-            $self.fixedHeaderTable();
+            $self.fixedHeaderTable(settings);
             methods.resize.apply(self);
           });
         }
@@ -419,9 +419,9 @@
             $wrapper          = $self.closest('.fht-table-wrapper'),
             $fixedBody        = $wrapper.find('.fht-fixed-body'),
             $fixedColumn      = $wrapper.find('.fht-fixed-column'),
-            $thead            = $('<div class="fht-thead"><table class="fht-table"><thead><tr></tr></thead></table></div>'),
-            $tbody            = $('<div class="fht-tbody"><table class="fht-table"><tbody></tbody></table></div>'),
-            $tfoot            = $('<div class="fht-tfoot"><table class="fht-table"><tfoot><tr></tr></tfoot></table></div>'),
+            $thead            = $fixedColumn.find('.fht-thead'),
+            $tbody            = $fixedColumn.find('.fht-tbody'),
+            $tfoot            = $fixedColumn.find('.fht-tfoot'),
             fixedBodyWidth    = $wrapper.width(),
             fixedBodyHeight   = $fixedBody.find('.fht-tbody').height() - settings.scrollbarOffset,
             $firstThChildren,
@@ -429,10 +429,6 @@
             fixedColumnWidth,
             $newRow,
             firstTdChildrenSelector;
-
-        $thead.find('table.fht-table').addClass(settings.originalTable.attr('class'));
-        $tbody.find('table.fht-table').addClass(settings.originalTable.attr('class'));
-        $tfoot.find('table.fht-table').addClass(settings.originalTable.attr('class'));
 
         $firstThChildren = $fixedBody.find('.fht-thead thead tr > *:lt(' + settings.fixedColumns + ')');
         fixedColumnWidth = settings.fixedColumns * tableProps.border;
@@ -457,15 +453,26 @@
           });
 
         // clone header
-        $thead.appendTo($fixedColumn)
-          .find('tr')
-          .append($firstThChildren.clone());
+        if (!$thead[0])
+        {
+          $thead = $('<div class="fht-thead"><table class="fht-table '+settings.originalTable.attr('class')+'"><thead><tr></tr></thead></table></div>');
+          $thead.appendTo($fixedColumn);
+        }
+        else
+          $thead.find('tr').html('');
+        $thead.find('tr').append($firstThChildren.clone());
 
-        $tbody.appendTo($fixedColumn)
-          .css({
-            'margin-top': -1,
-            'height': fixedBodyHeight + tableProps.border
-          });
+        if (!$tbody[0])
+        {
+          $tbody = $('<div class="fht-tbody"><table class="fht-table '+settings.originalTable.attr('class')+'"><tbody></tbody></table></div>');
+          $tbody.appendTo($fixedColumn);
+        }
+        else
+          $tbody.find('tbody').html('');
+        $tbody.css({
+          'margin-top': -1,
+          'height': fixedBodyHeight + tableProps.border
+        });
 
         $firstTdChildren.each(function(index) {
           if (index % settings.fixedColumns == 0) {
@@ -517,8 +524,14 @@
               footwidth;
 
           helpers._fixHeightWithCss($firstTdFootChild, tableProps);
-          $tfoot.appendTo($fixedColumn)
-            .find('tr')
+          if (!$tfoot[0])
+          {
+            $tfoot = $('<div class="fht-tfoot"><table class="fht-table '+settings.originalTable.attr('class')+'"><tfoot><tr></tr></tfoot></table></div>');
+            $tfoot.appendTo($fixedColumn);
+          }
+          else
+            $tfoot.find('tr').html('');
+          $tfoot.find('tr')
             .append($firstTdFootChild.clone());
           // Set (view width) of $tfoot div to width of table (this accounts for footers with a colspan)
           footwidth = $tfoot.find('table').innerWidth();
