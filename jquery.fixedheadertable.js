@@ -132,6 +132,10 @@
             $divHead = $('<div class="fht-thead"><table class="fht-table"></table></div>').prependTo($wrapper);
           }
 
+          $divHead.css({
+            'width': widthMinusScrollbar
+          });
+
           $divHead.find('table.fht-table')
             .addClass(settings.originalTable.attr('class'))
             .attr('style', settings.originalTable.attr('style'));
@@ -161,7 +165,7 @@
           tfootHeight = $tfoot.outerHeight(true);
         }
 
-        var tbodyHeight = $wrapper.height() - $thead.outerHeight(true) - tfootHeight - tableProps.border;
+        var tbodyHeight = Math.min.apply(null, [$wrapper.height(), $(window).height()]) - $thead.outerHeight(true) - tfootHeight - tableProps.border;
 
         if ($self.height() - $divHead.outerHeight(true) <= tbodyHeight) {
           // Remove scrollbar padding
