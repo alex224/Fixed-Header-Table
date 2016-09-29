@@ -443,7 +443,7 @@
             fixedColumnWidth,
             $newRow,
             firstTdChildrenSelector;
-
+        $fixedBody.css("padding" ,  "0px 0 0 1px");
         $firstThChildren = $fixedBody.find('.fht-thead thead tr > *:lt(' + settings.fixedColumns + ')');
         fixedColumnWidth = settings.fixedColumns * tableProps.border;
         $firstThChildren.each(function() {
@@ -507,17 +507,17 @@
           'width': fixedColumnWidth
         });
 
-        
+
         // bind mousewheel events
         $fixedColumn.find('.fht-tbody .fht-table').on('mousewheel', function(event) {
           if (event.deltaY == 0) {
             return;
           }
-          
+
           var top = $fixedBody.find('.fht-tbody').scrollTop();
           var scrollDistance = (-1 * event.deltaY) * event.deltaFactor;
           var newTop = top + scrollDistance;
-          
+
           $fixedBody.find('.fht-tbody').scrollTop(newTop).scroll();
 
           return false;
