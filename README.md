@@ -1,6 +1,9 @@
-## Version 1.3
- - jquery.fixedheadertable.js
- 
+## Version 2016-08-10
+* jquery.fixedheadertable.js
+
+## Changes
+* fixed sizing & resizing
+
 ## Methods:
 
 * show - `$('selector').fixedHeaderTable('show');`

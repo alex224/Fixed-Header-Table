@@ -2,6 +2,7 @@
  * jquery.fixedHeaderTable. The jQuery fixedHeaderTable plugin
  *
  * Copyright (c) 2013 Mark Malek
+ *           (c) 2015-2016 Vitaliy Filippov
  * http://fixedheadertable.com
  *
  * Licensed under MIT
@@ -10,10 +11,8 @@
  * http://docs.jquery.com/Plugins/Authoring
  * jQuery authoring guidelines
  *
- * Launch  : October 2009
- * Version : 1.3
- * Released: May 9th, 2011
- *
+ * Version: 2016-08-10
+ * Based on: Original 1.3 (2011-05-09)
  *
  * all CSS sizing (width,height) is done in pixels (px)
  */
@@ -34,7 +33,7 @@
       autoShow:        true, // hide table after its created
       footer:          false, // show footer
       cloneHeadToFoot: false, // clone head and use as footer
-      autoResize:      false, // resize table if its parent wrapper changes size
+      autoResize:      true, // resize table if its parent wrapper changes size
       create:          null // callback after plugin completes
     };
 
@@ -71,6 +70,7 @@
             $divHead,
             $divBody,
             $fixedBody,
+            widthWithScrollbar,
             widthMinusScrollbar;
 
         settings.originalTable = $(this).clone();
@@ -79,10 +79,11 @@
         settings.themeClassName = settings.themeClass;
 
         if (settings.width.search('%') > -1) {
-            widthMinusScrollbar = $self.parent().width() - settings.scrollbarOffset;
+            widthWithScrollbar = $self.parent().width();
         } else {
-            widthMinusScrollbar = settings.width - settings.scrollbarOffset;
+            widthWithScrollbar = settings.width;
         }
+        widthMinusScrollbar = widthWithScrollbar - settings.scrollbarOffset;
 
         $self.css({
           width: widthMinusScrollbar
@@ -122,7 +123,7 @@
 
         var tableProps = helpers._getTableProps($self);
 
-        helpers._setupClone($divBody, tableProps.tbody);
+        helpers._setupClone($divBody, tableProps.thead);
 
         if (!$self.hasClass('fht-table-init')) {
           if (settings.fixedColumns > 0) {
@@ -137,14 +138,14 @@
 
           $thead.clone().appendTo($divHead.find('table'));
         } else {
-          $divHead = $wrapper.find('div.fht-thead');
+          $divHead = $wrapper.find(settings.fixedColumns > 0 ? 'div.fht-fixed-body div.fht-thead' : 'div.fht-thead');
+
+          // Refresh header (it may have changed in between)
+          $divHead.find('thead').remove();
+          $thead.clone().appendTo($divHead.find('table'));
         }
-
-        helpers._setupClone($divHead, tableProps.thead);
-
-        $self.css({
-          'margin-top': -$divHead.outerHeight(true)
-        });
+        $divHead.find('table.fht-table')
+          .css({ width: widthWithScrollbar });
 
         /*
          * Check for footer
@@ -162,9 +163,30 @@
 
         var tbodyHeight = $wrapper.height() - $thead.outerHeight(true) - tfootHeight - tableProps.border;
 
+        if ($self.height() - $divHead.outerHeight(true) <= tbodyHeight) {
+          // Remove scrollbar padding
+          $divHead.find('table.fht-table')
+            .css({ width: widthMinusScrollbar });
+          settings.scrollbarOffset = 0;
+        }
+
+        helpers._setupClone($divHead, tableProps.thead);
+
+        $self.css({
+          'margin-top': -$divHead.outerHeight(true)
+        });
+
         $divBody.css({
           'height': tbodyHeight
         });
+
+        if (settings.autoResize && !$self.hasClass('fht-table-init')) {
+          $(window).on('resize', function() {
+            $wrapper.find('.fht-cell').remove();
+            $self.fixedHeaderTable(settings);
+            methods.resize.apply(self);
+          });
+        }
 
         $self.addClass('fht-table-init');
 
@@ -187,10 +209,11 @@
 
       /*
        * Resize the table
-       * Incomplete - not implemented yet
        */
       resize: function() {
-        var self  = this;
+        var $self = $(this);
+        $self.closest('.fht-table-wrapper').find('.fht-cell').remove();
+        $self.fixedHeaderTable();
         return self;
       },
 
@@ -396,9 +419,9 @@
             $wrapper          = $self.closest('.fht-table-wrapper'),
             $fixedBody        = $wrapper.find('.fht-fixed-body'),
             $fixedColumn      = $wrapper.find('.fht-fixed-column'),
-            $thead            = $('<div class="fht-thead"><table class="fht-table"><thead><tr></tr></thead></table></div>'),
-            $tbody            = $('<div class="fht-tbody"><table class="fht-table"><tbody></tbody></table></div>'),
-            $tfoot            = $('<div class="fht-tfoot"><table class="fht-table"><tfoot><tr></tr></tfoot></table></div>'),
+            $thead            = $fixedColumn.find('.fht-thead'),
+            $tbody            = $fixedColumn.find('.fht-tbody'),
+            $tfoot            = $fixedColumn.find('.fht-tfoot'),
             fixedBodyWidth    = $wrapper.width(),
             fixedBodyHeight   = $fixedBody.find('.fht-tbody').height() - settings.scrollbarOffset,
             $firstThChildren,
@@ -406,10 +429,6 @@
             fixedColumnWidth,
             $newRow,
             firstTdChildrenSelector;
-
-        $thead.find('table.fht-table').addClass(settings.originalTable.attr('class'));
-        $tbody.find('table.fht-table').addClass(settings.originalTable.attr('class'));
-        $tfoot.find('table.fht-table').addClass(settings.originalTable.attr('class'));
 
         $firstThChildren = $fixedBody.find('.fht-thead thead tr > *:lt(' + settings.fixedColumns + ')');
         fixedColumnWidth = settings.fixedColumns * tableProps.border;
@@ -434,15 +453,26 @@
           });
 
         // clone header
-        $thead.appendTo($fixedColumn)
-          .find('tr')
-          .append($firstThChildren.clone());
+        if (!$thead[0])
+        {
+          $thead = $('<div class="fht-thead"><table class="fht-table '+settings.originalTable.attr('class')+'"><thead><tr></tr></thead></table></div>');
+          $thead.appendTo($fixedColumn);
+        }
+        else
+          $thead.find('tr').html('');
+        $thead.find('tr').append($firstThChildren.clone());
 
-        $tbody.appendTo($fixedColumn)
-          .css({
-            'margin-top': -1,
-            'height': fixedBodyHeight + tableProps.border
-          });
+        if (!$tbody[0])
+        {
+          $tbody = $('<div class="fht-tbody"><table class="fht-table '+settings.originalTable.attr('class')+'"><tbody></tbody></table></div>');
+          $tbody.appendTo($fixedColumn);
+        }
+        else
+          $tbody.find('tbody').html('');
+        $tbody.css({
+          'margin-top': -1,
+          'height': fixedBodyHeight + tableProps.border
+        });
 
         $firstTdChildren.each(function(index) {
           if (index % settings.fixedColumns == 0) {
@@ -494,8 +524,14 @@
               footwidth;
 
           helpers._fixHeightWithCss($firstTdFootChild, tableProps);
-          $tfoot.appendTo($fixedColumn)
-            .find('tr')
+          if (!$tfoot[0])
+          {
+            $tfoot = $('<div class="fht-tfoot"><table class="fht-table '+settings.originalTable.attr('class')+'"><tfoot><tr></tr></tfoot></table></div>');
+            $tfoot.appendTo($fixedColumn);
+          }
+          else
+            $tfoot.find('tr').html('');
+          $tfoot.find('tr')
             .append($firstTdFootChild.clone());
           // Set (view width) of $tfoot div to width of table (this accounts for footers with a colspan)
           footwidth = $tfoot.find('table').innerWidth();
@@ -610,9 +646,8 @@
            * to align with the scrollbar of the body
            */
           if (!$(this).closest('.fht-tbody').length && $(this).is(':last-child') && !$(this).closest('.fht-fixed-column').length) {
-            var padding = Math.max((($(this).innerWidth() - $(this).width()) / 2), settings.scrollbarOffset);
             $(this).css({
-              'padding-right': parseInt($(this).css('padding-right')) + padding + 'px'
+              'padding-right': parseInt($(this).css('padding-right')) + settings.scrollbarOffset + 'px'
             });
           }
         });
