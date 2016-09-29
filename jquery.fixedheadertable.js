@@ -63,7 +63,7 @@
       setup: function () {
         var $self       = $(this),
             self        = this,
-            $thead      = $self.find('thead'),
+            $thead      = helpers._getTHead($self),
             $tfoot      = $self.find('tfoot'),
             tfootHeight = 0,
             $wrapper,
@@ -335,7 +335,7 @@
       _isTable: function($obj) {
         var $self = $obj,
             hasTable = $self.is('table'),
-            hasThead = $self.find('thead').length > 0,
+	        hasThead = ($self.find('thead').length > 0 || $self.find('tr').first().length > 0),
             hasTbody = $self.find('tbody').length > 0;
 
         if (hasTable && hasThead && hasTbody) {
@@ -345,7 +345,17 @@
         return false;
 
       },
-
+      _getTHead: function($obj) {
+	    var $self = $obj;
+	    if ($self.find('thead').length > 0) {
+		    return $self.find('thead');
+	    } else if ($self.find('tr').first().length > 0) {
+		    $self.prepend('<thead></thead>');
+		    $self.find('tr').first().detach().appendTo($self.find('thead'));
+		    return $self.find('thead');
+	    }
+	    return self;
+      },
       /*
        * return void
        * bind scroll event
